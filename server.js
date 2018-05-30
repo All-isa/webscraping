@@ -7,7 +7,7 @@ var mongoose = require('mongoose');
 
 //initialize express
 var app = express();
-var Port = process.env.PORT || 3000;
+var PORT = process.env.PORT || 3000;
 
 mongoose.Promise = Promise;
 
@@ -20,7 +20,10 @@ app.set('view engine', 'handlebars');
 
 app.use(express.static('public'));
 
-mongoose.connect("INSERTHEROKULINK");
+// If deployed, use the deployed database. Otherwise use the local mongoHeadlines database
+var MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost/mongoHeadlines";
+
+mongoose.connect("MONGODB_URI");
 var db = mongoose.connection;
 
 //if errors console log them
@@ -35,5 +38,5 @@ db.once("open", function() {
 require("./controllers/articlesController.js")(app);
 
 app.listen(PORT, function() {
-    console.log("Listening on http://localhost:${PORT}")
-}
+    console.log("Listening on http://localhost:"+ PORT)
+});
