@@ -1,57 +1,76 @@
+var mongoose = require('mongoose');
+
+var Schema = mongoose.Schema;
+
+var ArticleSchema = new Schema({
+    title: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    link: {
+        type: String,
+        required: true,
+        unique: true,
+    },
+    articleSummary: {
+        type: String,
+        required: true,
+        unique: true
+    },
+    comment: [
+        {
+            type: Schema.Types.ObjectId,
+            ref: "Comment"
+        }
+    ]
+});
+
+var Article = mongoose.model("Article", ArticleSchema);
+// module.exports = Article;
+
+
 //things we need for scraping
-var request = require('request');
+var axios = require("axios");
 var cheerio = require('cheerio');
 
 //requiring models 
-var Comments = ('../models/comments.js');
-var Articles = ('../models/articles.js');
+var db = require('./models/comments')
 
 module.exports = function(app) {
 
     app.get('/', function(req, res) {
-        res.redirect('/articles');
+        // res.redirect('/articles');
     });
 
     app.get('/scrape', function(req, res) {
-        request('https://www.sunset.com/travel', function (error, response, html) {
-            var $ = cheerio.load(html);
-            $(".post-excerpt").each(function(i, element) {
-                var title = $(this)
-                .children("h2")
-                .children("a")
-                .text();
+        axios.get('https://www.sunset.com/').then(function (response) {
+            var $ = cheerio.load(response.data);
 
-                var link = $(this)
-                .children("h2")
-                .children("a")
-                .attr("href");
+            $(".headline").each(function(i, element) {
 
-                var articleSummary = $(this)
-                .children("div.text")
-                .text();
+                var result = {};
 
-                if (title && link && articleSnippet) {
-                    var result = {};
-                    }
+                result.title = $(this).children("a").text().trim();
 
-                result.title = title;
-                result.link = link;
-                result.articleSnippet = articleSnippet;
+                result.link = $(this).children("a").attr("href");
+
+                result.articleSummary = $(this).children("div.text").text().trim();
         
-                Article.create(result, function(err, doc) {
-                    if (err) {
-                        console.log(err);
-                    } else {
-                        console.log(doc);
-                    }
+                Article.create(result)
+                    .then(function(dbArticle) {
+                        console.log(dbArticle);
+                    }).catch(function(err) {
+                        return res.json(err);
+                    })
                 });
             }
         );
-    });
     res.redirect('/');
 });
     app.get('/articles', function(req, res) {
-        Articles.find({}, function(error, doc) {
+        // console.log(Article);
+        Article.find({}, function(error, doc) {
             if (error) {
                 console.log(error)
             } else {
@@ -62,7 +81,7 @@ module.exports = function(app) {
     });
 
     app.get('/articles/:id', function(req, res) {
-        Articles.findOne({'_id': req.params.id})
+        Article.findOne({'_id': req.params.id})
         .populate('comment')
         .exec(function (error, doc) {
             if (error) {
@@ -74,7 +93,7 @@ module.exports = function(app) {
     });
 
     app.post('/articles/:id', function(req, res){
-        Comment.create(req.body, function(error, doc) {
+        db.Comment.create(req.body, function(error, doc) {
             if (error) {
                 console.log(error)
             } else {
@@ -99,7 +118,7 @@ module.exports = function(app) {
         });
     });
     app.delete('/articles/:id/:commentid', function(req, res) {
-        Comment.findByIdAndRemove(req.params.commentid, function (error, doc) {
+        db.Comment.findByIdAndRemove(req.params.commentid, function (error, doc) {
             if (error) {
                 console.log(error);
             } else {
