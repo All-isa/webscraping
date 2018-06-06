@@ -40,22 +40,22 @@ var db = require('./models/comments')
 module.exports = function(app) {
 
     app.get('/', function(req, res) {
-        // res.redirect('/articles');
+        res.redirect('/articles');
     });
 
     app.get('/scrape', function(req, res) {
         axios.get('https://www.sunset.com/').then(function (response) {
             var $ = cheerio.load(response.data);
 
-            $(".headline").each(function(i, element) {
+            $(".article-info").each(function(i, element) {
 
                 var result = {};
 
-                result.title = $(this).children("a").text().trim();
+                result.title = $(element).children(".headline").text().trim();
 
-                result.link = $(this).children("a").attr("href");
+                result.link = $(element).children("a").attr("href");
 
-                result.articleSummary = $(this).children("div.text").text().trim();
+                result.articleSummary = $(element).children(".article-info-extended").children(".desktop-only").text().trim();
         
                 Article.create(result)
                     .then(function(dbArticle) {
@@ -77,12 +77,12 @@ module.exports = function(app) {
                 res.render("index", {result: doc});
             }
         })
-    .sort({'_id': -1});
+    .sort({'_id': 1});
     });
 
     app.get('/articles/:id', function(req, res) {
         Article.findOne({'_id': req.params.id})
-        .populate('comment')
+        .populate('Comment')
         .exec(function (error, doc) {
             if (error) {
                 console.log(error);
@@ -127,7 +127,7 @@ module.exports = function(app) {
                     "_id": req.params.id
                   }, {
                     $pull: {
-                      "comment": doc._id
+                      "Comment": doc._id
                     }
                   }).exec(function (err, doc) {
                       if (err) {
