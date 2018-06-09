@@ -10,6 +10,8 @@ body {
     border: 2px;
     background-color: rgb(255, 255, 255);
     font-family: 'Trebuchet MS', 'Lucida Sans Unicode', 'Lucida Grande', 'Lucida Sans', Arial, sans-serif;
+    border: solid;
+    border-color: rgb(164, 174, 179);
 }
 
 h3 {

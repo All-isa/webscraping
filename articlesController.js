@@ -57,6 +57,8 @@ module.exports = function(app) {
 
                 result.articleSummary = $(element).children(".article-info-extended").children(".desktop-only").text().trim();
         
+                result.imgURL = $(element).children().attr("img");
+                
                 Article.create(result)
                     .then(function(dbArticle) {
                         console.log(dbArticle);
@@ -105,7 +107,6 @@ module.exports = function(app) {
                     }
                 }, {
                     safe: true,
-                    upsert: true,
                     new: true
                 }).exec(function (err, doc) {
                     if (err) {
